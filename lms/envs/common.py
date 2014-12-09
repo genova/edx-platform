@@ -1980,3 +1980,6 @@ API_DATE_FORMAT = '%Y-%m-%d'
 # for Student Notes we would like to avoid too frequent token refreshes (default is 30 seconds)
 if FEATURES['ENABLE_EDXNOTES']:
     OAUTH_ID_TOKEN_EXPIRATION = 60 * 60
+
+from search.elastic import ElasticSearchEngine
+SEARCH_ENGINE = ElasticSearchEngine
