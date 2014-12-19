@@ -1984,3 +1984,5 @@ if FEATURES['ENABLE_EDXNOTES']:
 
 from search.elastic import ElasticSearchEngine
 SEARCH_ENGINE = ElasticSearchEngine
+SEARCH_RESULT_PROCESSOR = "lms.lib.courseware_search.lms_result_processor.LmsSearchResultProcessor"
+
