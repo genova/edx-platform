@@ -1983,7 +1983,8 @@ API_DATE_FORMAT = '%Y-%m-%d'
 if FEATURES['ENABLE_EDXNOTES']:
     OAUTH_ID_TOKEN_EXPIRATION = 60 * 60
 
+# Use ElasticSearch as the search engine herein
 from search.elastic import ElasticSearchEngine
 SEARCH_ENGINE = ElasticSearchEngine
+# Use the LMS specific result processor
 SEARCH_RESULT_PROCESSOR = "lms.lib.courseware_search.lms_result_processor.LmsSearchResultProcessor"
-
