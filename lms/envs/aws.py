@@ -478,3 +478,7 @@ INVOICE_PAYMENT_INSTRUCTIONS = ENV_TOKENS.get('INVOICE_PAYMENT_INSTRUCTIONS', IN
 #date format the api will be formatting the datetime values
 API_DATE_FORMAT = '%Y-%m-%d'
 API_DATE_FORMAT = ENV_TOKENS.get('API_DATE_FORMAT', API_DATE_FORMAT)
+
+# Use ElasticSearch as the search engine herein
+from search.elastic import ElasticSearchEngine
+SEARCH_ENGINE = ElasticSearchEngine
