@@ -13,8 +13,32 @@ class DashboardPage(PageObject):
     Student dashboard, where the student can view
     courses she/he has registered for.
     """
+    def __init__(self, browser, separate_verified=False):
+        """Initialize the page.
 
-    url = BASE_URL + "/dashboard"
+        Arguments:
+            browser (Browser): The browser instance.
+
+        Keyword Arguments:
+            separate_verified (Boolean): Whether to use the split payment and
+                verification flow.
+        """
+        super(DashboardPage, self).__init__(browser)
+
+        if separate_verified:
+            self._querystring = "?separate-verified=1"
+        else:
+            self._querystring = "?disable-separate-verified=1"
+
+    @property
+    def url(self):
+        """Return the URL corresponding to the dashboard."""
+        url = "{base}/dashboard{querystring}".format(
+            base=BASE_URL,
+            querystring=self._querystring
+        )
+
+        return url
 
     def is_browser_on_page(self):
         return self.q(css='section.my-courses').present
@@ -43,6 +67,60 @@ class DashboardPage(PageObject):
             return course_name
 
         return self.q(css='section.info > hgroup > h3 > a').map(_get_course_name).results
+
+    def check_enrollment_mode(self, course_name, mode='verified'):
+        """Verify enrollment in a given mode.
+
+        Checks if the dashboard contains an enrollment in the provided mode for
+        the provided course name.
+
+        Arguments:
+            course_name (str): The name of the course whose mode should be checked.
+            
+        Keyword Arguments:
+            mode (str): The expected enrollment mode.
+
+        Returns:
+            A Boolean; whether an enrollment in the provided mode for the provided
+                course name was found on the dashboard.
+        """
+        # Filter elements by course name, only returning the relevant course item
+        course_listing = self.q(css=".course").filter(lambda el: course_name in el.text).results
+        
+        if course_listing:
+            # There should only be one course listing for the provided course name
+            banner_classes = course_listing[0].get_attribute('class')
+        else:
+            return False
+
+        return mode in banner_classes
+
+    def upgrade_enrollment(self, course_name, upgrade_page):
+        """Interact with the upgrade button for the course with the provided name.
+
+        Arguments:
+            course_name (str): The name of the course whose mode should be checked.
+            upgrade_page (PageObject): The page to wait on after clicking the upgrade button. Importing
+                the definition of PaymentAndVerificationFlow results in a circular dependency.
+
+        Raises:
+            Exception, if no enrollment corresponding to the provided course name appears
+                on the dashboard.
+        """
+        # Filter elements by course name, only returning the relevant course item
+        course_listing = self.q(css=".course").filter(lambda el: course_name in el.text).results
+
+        if course_listing:
+            # There should only be one course listing corresponding to the provided course name.
+            el = course_listing[0]
+
+            # Expand the upsell copy and click the upgrade button
+            el.find_element_by_css_selector('.message-upsell').click()
+            el.find_element_by_css_selector('#upgrade-to-verified').click()
+
+            upgrade_page.wait_for_page()
+        else:
+            raise Exception("No enrollment for {} is visible on the dashboard.".format(course_name))
 
     def view_course(self, course_id):
         """
