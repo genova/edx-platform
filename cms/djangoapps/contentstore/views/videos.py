@@ -8,7 +8,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseNotFound
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_GET, require_http_methods
 import rfc6266
 
@@ -37,39 +37,40 @@ KEY_EXPIRATION_IN_SECONDS = 86400
 
 class StatusDisplayStrings(object):
     """
-    Enum of display strings for Video Status presented in Studio (e.g., in UI and in CSV download).
+    A class to map status strings as stored in VAL to display strings for the
+    video upload page
     """
+
     # Translators: This is the status of an active video upload
-    UPLOADING = _("Uploading")
+    _UPLOADING = ugettext_noop("Uploading")
     # Translators: This is the status for a video that the servers are currently processing
-    IN_PROGRESS = _("In Progress")
+    _IN_PROGRESS = ugettext_noop("In Progress")
     # Translators: This is the status for a video that the servers have successfully processed
-    COMPLETE = _("Complete")
+    _COMPLETE = ugettext_noop("Complete")
     # Translators: This is the status for a video that the servers have failed to process
-    FAILED = _("Failed"),
+    _FAILED = ugettext_noop("Failed"),
     # Translators: This is the status for a video for which an invalid
     # processing token was provided in the course settings
-    INVALID_TOKEN = _("Invalid Token"),
+    _INVALID_TOKEN = ugettext_noop("Invalid Token"),
     # Translators: This is the status for a video that is in an unknown state
-    UNKNOWN = _("Unknown")
+    _UNKNOWN = ugettext_noop("Unknown")
 
-
-def status_display_string(val_status):
-    """
-    Converts VAL status string to Studio status string.
-    """
-    status_map = {
-        "upload": StatusDisplayStrings.UPLOADING,
-        "ingest": StatusDisplayStrings.IN_PROGRESS,
-        "transcode_queue": StatusDisplayStrings.IN_PROGRESS,
-        "transcode_active": StatusDisplayStrings.IN_PROGRESS,
-        "file_delivered": StatusDisplayStrings.COMPLETE,
-        "file_complete": StatusDisplayStrings.COMPLETE,
-        "file_corrupt": StatusDisplayStrings.FAILED,
-        "pipeline_error": StatusDisplayStrings.FAILED,
-        "invalid_token": StatusDisplayStrings.INVALID_TOKEN
+    _STATUS_MAP = {
+        "upload": _UPLOADING,
+        "ingest": _IN_PROGRESS,
+        "transcode_queue": _IN_PROGRESS,
+        "transcode_active": _IN_PROGRESS,
+        "file_delivered": _COMPLETE,
+        "file_complete": _COMPLETE,
+        "file_corrupt": _FAILED,
+        "pipeline_error": _FAILED,
+        "invalid_token": _INVALID_TOKEN
     }
-    return status_map.get(val_status, StatusDisplayStrings.UNKNOWN)
+
+    @staticmethod
+    def get(val_status):
+        """Map a VAL status string to a localized display string"""
+        return _(StatusDisplayStrings._STATUS_MAP.get(val_status, StatusDisplayStrings._UNKNOWN))
 
 
 @expect_json
@@ -153,7 +154,7 @@ def video_encodings_download(request, course_key_string):
                 (duration_col, duration_val),
                 (added_col, video["created"].isoformat()),
                 (video_id_col, video["edx_video_id"]),
-                (status_col, video["status"]),
+                (status_col, StatusDisplayStrings.get(video["status"])),
             ] +
             [
                 (get_profile_header(encoded_video["profile"]), encoded_video["url"])
@@ -219,13 +220,7 @@ def _get_videos(course):
         for v in modulestore().get_all_asset_metadata(course.id, VIDEO_ASSET_TYPE)
     ]
 
-    videos = list(get_videos_for_ids(edx_videos_ids))
-
-    # convert VAL's status to studio's Video Upload feature status.
-    for video in videos:
-        video["status"] = status_display_string(video["status"])
-
-    return videos
+    return list(get_videos_for_ids(edx_videos_ids))
 
 
 def _get_index_videos(course):
@@ -233,10 +228,12 @@ def _get_index_videos(course):
     Returns the information about each video upload required for the video list
     """
     return list(
-        {
-            attr: video[attr]
-            for attr in ["edx_video_id", "client_video_id", "created", "duration", "status"]
-        }
+        dict(
+            [
+                (attr, video[attr])
+                for attr in ["edx_video_id", "client_video_id", "created", "duration", "status"]
+            ] + [("status", StatusDisplayStrings.get(video["status"]))]
+        )
         for video in _get_videos(course)
     )
 

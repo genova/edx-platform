@@ -16,7 +16,7 @@ from mock import Mock, patch
 from edxval.api import create_profile, create_video, get_video_info
 
 from contentstore.models import VideoUploadConfig
-from contentstore.views.videos import KEY_EXPIRATION_IN_SECONDS, VIDEO_ASSET_TYPE, status_display_string
+from contentstore.views.videos import KEY_EXPIRATION_IN_SECONDS, VIDEO_ASSET_TYPE, StatusDisplayStrings
 from contentstore.tests.utils import CourseTestCase
 from contentstore.utils import reverse_course_url
 from xmodule.assetstore import AssetMetadata
@@ -171,7 +171,10 @@ class VideosHandlerTestCase(VideoUploadTestMixin, CourseTestCase):
             dateutil.parser.parse(response_video["created"])
             for field in ["edx_video_id", "client_video_id", "duration"]:
                 self.assertEqual(response_video[field], original_video[field])
-            self.assertEqual(response_video["status"], status_display_string(original_video["status"]))
+            self.assertEqual(
+                response_video["status"],
+                StatusDisplayStrings.get(original_video["status"])
+            )
 
     def test_get_html(self):
         response = self.client.get(self.url)
@@ -315,10 +318,7 @@ class VideoUrlsCsvTestCase(VideoUploadTestMixin, CourseTestCase):
         super(VideoUrlsCsvTestCase, self).setUp()
         VideoUploadConfig(
             profile_whitelist="profile1",
-            status_whitelist=(
-                status_display_string("file_complete") + "," +
-                status_display_string("transcode_active")
-            )
+            status_whitelist="file_complete,transcode_active"
         ).save()
 
     def _check_csv_response(self, expected_video_ids, expected_profiles):
@@ -372,11 +372,7 @@ class VideoUrlsCsvTestCase(VideoUploadTestMixin, CourseTestCase):
     def test_config(self):
         VideoUploadConfig(
             profile_whitelist="profile1,profile2",
-            status_whitelist=(
-                status_display_string("file_complete") + "," +
-                status_display_string("transcode_active") + "," +
-                status_display_string("upload")
-            )
+            status_whitelist="file_complete,transcode_active,upload"
         ).save()
         self._check_csv_response(["test1", "test2", "non-ascii"], ["profile1", "profile2"])
 
