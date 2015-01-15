@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 """
 Helper methods for milestones api calls.
 """
@@ -71,7 +72,7 @@ def set_prerequisite_courses(course_key, prerequisite_course_keys):
             add_prerequisite_course(course_key, prerequisite_course_key)
 
 
-def get_pre_requisite_courses_not_completed(user, enrolled_courses):  # pylint: disable=invalid-name
+def get_pre_requisite_courses_not_completed(user, enrolled_courses):
     """
     It would make dict of prerequisite courses not completed by user among courses
     user has enrolled in. It calls the fulfilment api of milestones app and
@@ -100,7 +101,7 @@ def get_pre_requisite_courses_not_completed(user, enrolled_courses):  # pylint: 
     return pre_requisite_courses
 
 
-def get_prerequisite_courses_display(course_descriptor):  # pylint: disable=invalid-name
+def get_prerequisite_courses_display(course_descriptor):
     """
     It would retrieve pre-requisite courses, make display strings
     and return them as list
@@ -153,5 +154,8 @@ def is_valid_course_key(key):
 
 
 def seed_milestone_relationship_types():
+    """
+    Helper method to pre-populate MRTs so the tests can run
+    """
     MilestoneRelationshipType.objects.create(name='requires')
     MilestoneRelationshipType.objects.create(name='fulfills')
